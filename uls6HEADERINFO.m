@@ -1,0 +1,67 @@
+% uls6 constants for reading data
+xmlStartFlag = 'F044CC11'; %specify uls6 xml start record
+xmlEndFlag = 'E088DD66'; %specify uls6 xml end record
+dataStartFlag = 'FF01AA00'; %flag indicating the start of a profile data record
+dataEndFlag = 'EF02BB66'; %flag indicating the end of a profile data record
+CODE_BITS_MASK = 0x7F00;
+TYPE_BITS_MASK = 0x00E0;
+ARRAY_BITS_MASK = 0x001F;
+REQUIRED_BITS_MASK = 0x8000;
+RECORD_DATA_TYPE_MASK = 0x00E0;
+FIRST_HEADER_RECORD = 0xBCD0;
+LAST_HEADER_RECORD = 0xABC1;
+
+% array of RecordID Name => these come from masking RecordCode
+RecordIDLookup = {0x2A,'FIRST_HEADER_RECORD';
+0x3B,'HEADER_BYTES';
+0x4C,'HEADER_NUM_RECORDS';
+0X7E,'LAST_HEADER_RECORD';
+0X00,'ProfileNumber';%'BURST_NUMBER';
+0X01,'SerialNumber';%'INST_SERIAL_NUM';
+0X02,'date';%'DATE_TIME';
+0X03,'ACQ_STATUS';
+0X04,'BurstInt';%'BURST_INTERVAL';
+0X05,'BASE_TIME';
+0X06,'PING_PERIOD';
+0X07,'PING_PERIOD_COUNTS';
+0X08,'PingPerProfile';%'PING_PER_BURST';
+0X09,'AvgPings';%'AVERAGE_BURST_PINGS';
+0X0A,'NumAcqPings';%'NUM_ACQUIRED_BURST_PINGS';
+0X0B,'FIRST_PING';
+0X0C,'LAST_PING';
+0X0D,'DATA_ERROR';
+0X0E,'OVER_RUN';
+0X0F,'PHASE';
+0X10,'NumChan';%'NUM_STORED_FREQUENCIES';
+0X11,'DigRate';%'DIG_RATE';
+0X12,'LockoutInd';%'LOCKOUT_INDEX';
+0X13,'NumBins';%'BINS';
+0X14,'RangeSamples';%'RANGE_SAMPLES_PER_BIN';
+0X15,'DataType';%'DATA_TYPE';
+0X16,'PulseLength';%'PULSE_LENGTH';
+0X17,'BOARD';
+0X18,'Freq';%'FREQUENCY';
+0X19,'NUM_SENSORS';
+0X1A,'SENSOR_STATUS';
+0X1B,'Ancillary';%'SENSOR_DATA';
+0X20,'GPS_DATE_TIME';
+0X21,'GPS_LAT_LONG';
+0X50,'CUSTOM1';  %0X70 to 0x7F CUSTOM 0 Set by user Set by user Variable values
+0X51,'CUSTOM2';
+0X52,'CUSTOM3';
+0X53,'CUSTOM4';
+0X54,'CUSTOM5';
+0X55,'CUSTOM6';
+0X56,'CUSTOM7';
+0X57,'CUSTOM8';
+0X58,'CUSTOM9';
+0X59,'CUSTOM10';
+0X5A,'CUSTOM11';
+0X5B,'CUSTOM12';
+0X5C,'CUSTOM13';
+0X5D,'CUSTOM14';
+0X5E,'CUSTOM15';
+0X5F,'CUSTOM16'};
+
+ID = cell2mat({RecordIDLookup{:,1}});
+

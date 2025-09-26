@@ -1,0 +1,62 @@
+Config for unit '65001' deployed 2020-09-03 14:44:14
+Version Major	4
+Version Minor	0
+Version Date	20200902   
+Unit Serial Number	65001      
+CPU	000e0028594d500720393743
+Parameter Version	24578
+Instrument Type	AZFP
+DataOutput	FLASH
+SoundSpeed	1449.000000
+Acquisition Start:	Aug 17, 2020 14:45:06
+Number of phases	1
+Date span: Aug 17, 2020 14:45:06 - Aug 22, 2020 14:45:05
+---
+Phase 1
+Acquisition Period:	Aug 17, 2020 14:45:06 - Continuous
+Duration	432000 seconds	(5.0000 days)
+Phase Type	'NORMAL'
+Base Time	1.00000 seconds
+Burst IntervalCounts	1 sec
+Pings Per Burst	1 pings
+Ping Period	1.00000 sec
+
+Ping Period Counts	1 sec
+Average Burst Pings	no
+F1 Frequency    	125 Hz
+F1 Acquire Freq 	1 bool
+F1 Pulse Length 	1000 us
+F1 Dig. Rate    	64 kHz (0.0113 m/smpl)
+F1 Range Samples	9000 smpl
+F1 Range Averaging Samples	1 smpl
+F1 LockOutIndex	0 index
+F1 Bins	9000 smpl
+F1 Storage Format	0 (Log Data)
+F2 Frequency    	200 Hz
+F2 Acquire Freq 	1 bool
+F2 Pulse Length 	1000 us
+F2 Dig. Rate    	64 kHz (0.0113 m/smpl)
+F2 Range Samples	12000 smpl
+F2 Range Averaging Samples	1 smpl
+F2 LockOutIndex	0 index
+F2 Bins	12000 smpl
+F2 Storage Format	0 (Log Data)
+F3 Frequency    	417 Hz
+F3 Acquire Freq 	1 bool
+F3 Pulse Length 	1000 us
+F3 Dig. Rate    	64 kHz (0.0113 m/smpl)
+F3 Range Samples	11000 smpl
+F3 Range Averaging Samples	1 smpl
+F3 LockOutIndex	0 index
+F3 Bins	11000 smpl
+F3 Storage Format	0 (Log Data)
+F4 Frequency    	769 Hz
+F4 Acquire Freq 	1 bool
+F4 Pulse Length 	1000 us
+F4 Dig. Rate    	64 kHz (0.0113 m/smpl)
+F4 Range Samples	10000 smpl
+F4 Range Averaging Samples	1 smpl
+F4 LockOutIndex	0 index
+F4 Bins	10000 smpl
+F4 Storage Format	0 (Log Data)
+---------------------------------------

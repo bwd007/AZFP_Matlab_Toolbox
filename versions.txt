@@ -1,0 +1,13 @@
+v1.9 20230822
+- add startbin and endbin option in Parameter file to avg Sv and make a time series Sv plot
+- loading of csv data that was output from AzfpLink
+
+v1.8 20220819
+- remove input parser and used isfield on Parameter variable instead
+- add xmlpathname variable
+
+v1.7 20210811
+- user pressure channel (if avail) to shift ranges
+
+v1.6 20200904
+- reading of uls6 format data files
