@@ -41,7 +41,6 @@ codegen/
 
 # data files
 old versions/
-*.XML
 *.01A
 *.02A
 *.xlsx
