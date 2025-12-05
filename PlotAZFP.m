@@ -54,7 +54,7 @@ if isfield(Parameters,'EndRange')
     EndRange = Parameters(1).EndRange;
 end
 
-CBarLim = [-110 -40];
+CBarLim = [-100 -40];
 if isempty(Output) || ~isstruct(Output)
     error('Use [Output,Par] = ProcessAZFP(varargin) and pass in a valid Output variable');
 end

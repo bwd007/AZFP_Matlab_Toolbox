@@ -48,11 +48,8 @@ EndRange = 0;
 Time2Avg = 60;
 Pressure = 50;
 Salinity = 35;
+AvgTemperature = 15;
 Plot = 0;
-Channel = 1;
-Value2Plot = 2;
-NoiseFloor = 10000;
-Orientation = 1;
 UseTiltCorr = 0;
 PavgArr = [];
 LoadCSV = 0;
@@ -89,18 +86,6 @@ end
 if isfield(Parameters,'Plot')
     Plot = Parameters(1).Plot;
 end
-if isfield(Parameters,'Channel')
-    Channel = Parameters(1).Channel;
-end
-if isfield(Parameters,'Value2Plot')
-    Value2Plot = Parameters(1).Value2Plot;
-end
-if isfield(Parameters,'NoiseFloor')
-    NoiseFloor = Parameters(1).NoiseFloor;
-end
-if isfield(Parameters,'Orientation')
-    Orientation = Parameters(1).Orientation;
-end
 if isfield(Parameters,'UseTiltCorr')
     UseTiltCorr = Parameters(1).UseTiltCorr;
 end
@@ -110,8 +95,14 @@ end
 if isfield(Parameters,'LoadCSV')
     LoadCSV = 1;
 end
+if isfield(Parameters,'azfpTB_f_handle')
+    azfpTB_f_handle = Parameters.azfpTB_f_handle;
+end
+if isfield(Parameters,'AvgTemperature')
+    AvgTemperature = Parameters.AvgTemperature;
+end
 
-if ProcDir == 1
+if ProcDir
     if ischar(ProcDir)
         if exist(ProcDir, 'dir') == 7
             dirname = ProcDir;
@@ -125,7 +116,9 @@ if ProcDir == 1
     cd(dirname);
     % get a list of all of the AZFP files
     if ispc
-        filelist = dir('**\*.0*'); %the extra dot is to ignore .evi Echoview files, this does not work on MAC OS
+        %filelist = dir('**\*.0*'); %the extra dot is to ignore .evi Echoview files, this does not work on MAC OS
+        files = dir(); 
+        filelist = files(~[files.isdir] & ~cellfun('isempty', regexp({files.name}, '\.\d{2}[A-Za-z]$', 'once')));
     else
         filelist = dir('*.0*'); % for MACOS
     end
@@ -139,7 +132,7 @@ if ProcDir == 1
     dirlist = d(I,:);
 elseif ~LoadCSV
     if isempty(datafilename) %if no datafilename input, then prompt
-        [filelist, dirname] = uigetfile('*.??A;*.??B;*.??C;*.??D;*.azfp;*.aps6', 'Select AZFP hourly file(s)','MultiSelect', Parameters(1).MultiSelect);
+        [filelist, dirname] = uigetfile('*.*;*.azfp;*.aps6', 'Select AZFP hourly file(s)','MultiSelect', Parameters(1).MultiSelect);
         if iscell(filelist) % multiple files selected
             numfiles = length(filelist);
         else %one file selected
@@ -178,11 +171,10 @@ end
 if contains(fname,'azfp')
     Parameters.ULS6 = 1;
 end
-pathname = pwd;
 if ~Parameters.ULS6
     if isempty(xmlfilename) % if a single xml file is in the directory then load it, otherwise prompt
         xmlfile = dir('*.xml');
-        if length(xmlfile) == 1
+        if isscalar(xmlfile)
             xmlfilename = char(xmlfile.name);
         end
     end
@@ -205,6 +197,7 @@ Output(1).Depth = [];
 Output(1).filename = {''};
 Output(1).HourlyAvgTemp = [];
 Output(1).SoundSpeed = [];
+Output(1).ProfileNumber = [];
 for ii = 1:numfiles
     if ProcDir == 1 % if proc an entire directory then the file list is in a structure
         fname = filelist(ii,:);
@@ -216,7 +209,9 @@ for ii = 1:numfiles
             fname = char(filelist(ii,:));
         end
     end
-    [DataOut,Par,PavgArr] = LoadAZFP('Salinity',Salinity,'Bins2Avg',Bins2Avg,'StartRange',StartRange,'EndRange',EndRange,'Time2Avg',Time2Avg,'datafilename',fname,'Parameters',Parameters,'Pressure',Pressure);
+    [DataOut,Par,PavgArr] = LoadAZFP('Salinity',Salinity,'Bins2Avg',Bins2Avg,'StartRange',StartRange,'EndRange',EndRange, ...
+        'Time2Avg',Time2Avg,'datafilename',fname,'Parameters',Parameters,'Pressure',Pressure,'azfpTB_f_handle',azfpTB_f_handle, ...
+        'AvgTemperature',AvgTemperature);
     % check for an empty file and break
     if isempty(DataOut)
         if numfiles > 1
@@ -235,7 +230,7 @@ for ii = 1:numfiles
             Output(jj).TS = [];
             Output(jj).seaAbs = [];
         else
-            % if DataOut(jj).N has a differnet number of columns compared to
+            % if DataOut(jj).N has a different number of columns compared to
             % the previous file (stored in Output(jj).N) then catch this and
             % return an error
             if size(DataOut(jj).N,2) ~= size(Output(jj).N,2)
@@ -254,9 +249,11 @@ for ii = 1:numfiles
         Output(jj).Sv(end+1:end+1+size(DataOut(jj).Sv,1)-1,:) = DataOut(jj).Sv;
         Output(jj).TS(end+1:end+1+size(DataOut(jj).TS,1)-1,:) = DataOut(jj).TS;
         Output(jj).Freq = DataOut(jj).Freq;
-        Output(jj).seaAbs(end+1:end+1+size(DataOut(jj).seaAbs,1)-1,:) = DataOut(jj).seaAbs;
+        Output(jj).seaAbs(end+1:end+1+size(DataOut(jj).seaAbs,1)-1,:) = DataOut(jj).seaAbs;       
     end
     Output(1).Date(end+1:end+1+size(DataOut(1).Date,1)-1,:) = DataOut(1).Date;
+    Output(1).NewFileLoc(ii,:) = [length(Output(1).Tx)+1 length(Output(1).N)]; % location of start of file in final array Output and npts
+    Output(1).ProfileNumber(end+1:end+1+size(DataOut(1).ProfileNumber,1)-1,:) = DataOut(1).ProfileNumber;
     Output(1).Tx(end+1:end+1+size(DataOut(1).Tx,1)-1,:) = DataOut(1).Tx;
     Output(1).Ty(end+1:end+1+size(DataOut(1).Ty,1)-1,:) = DataOut(1).Ty;
     Output(1).T(end+1:end+1+size(DataOut(1).T,1)-1,:) = DataOut(1).T;
@@ -267,7 +264,7 @@ for ii = 1:numfiles
     Output(1).dirname = dirname;
     Output(1).HourlyAvgTemp(end+1:end+1+size(DataOut(1).HourlyAvgTemp,1)-1,:) = DataOut(1).HourlyAvgTemp;
     Output(1).SoundSpeed(end+1:end+1+size(DataOut(1).SoundSpeed,1)-1,:) = DataOut(1).SoundSpeed;
-    Output(1).StartEndRangeNumBins = DataOut(1).StartEndRangeNumBins;
+    Output(1).StartEndRangeNumBins = DataOut(1).StartEndRangeNumBins;   
 end
 
 % save the avg to the Output variable

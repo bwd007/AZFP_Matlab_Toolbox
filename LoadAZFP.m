@@ -33,6 +33,8 @@ defaultEndRange = 0;
 defaultTime2Avg = 1;
 defaultPressure = 50;
 defaultSalinity = 35;
+defaultazfpTB_f_handle = '';
+defaultAvgTemperature = 15;
 addParameter(p,'Parameters',defaultParameters,@isstruct);
 addParameter(p,'datafilename',defaultdatafilename,@ischar);
 addParameter(p,'Bins2Avg',defaultBins2Avg,@isnumeric);
@@ -41,6 +43,9 @@ addParameter(p,'EndRange',defaultEndRange,@isnumeric);
 addParameter(p,'Time2Avg',defaultTime2Avg,@isnumeric);
 addParameter(p,'Pressure',defaultPressure,@isnumeric);
 addParameter(p,'Salinity',defaultSalinity,@isnumeric);
+validationFcn = @(x) isa(x,'function_handle') || isempty(x);
+addOptional(p,'azfpTB_f_handle',defaultazfpTB_f_handle,validationFcn);
+addParameter(p,'AvgTemperature',defaultAvgTemperature,@isnumeric);
 parse(p,varargin{:});
 Parameters = p.Results.Parameters;
 datafilename = p.Results.datafilename;
@@ -50,12 +55,13 @@ EndRange = p.Results.EndRange;
 Time2Avg = p.Results.Time2Avg;
 Press = p.Results.Pressure;    % pressure (dBar)
 Salinity = p.Results.Salinity;
+azfpTB_f_handle = p.Results.azfpTB_f_handle;
+AvgTemperature = p.Results.AvgTemperature;
 
 % initialize variables
 Data = [];
 StartEndRangeAvg = 0;
 Output = [];
-pathname = '';
 PavgArr = [];
 OutputPavg = 0;
 LoadCSV = 0;
@@ -189,6 +195,15 @@ while ~feof(fidAZFP) && ~Stop
             end
         end
 
+        %run wrapper to scale N. We need to do it here in case averaging is
+        %done so that the Pavg calc is correct
+        if ~isempty(azfpTB_f_handle)
+            correctedNData = azfpTB_apply_function_wrapper(azfpTB_f_handle, {[pathname '/' filename], Parameters, Data(ii)});
+            if ~isempty(correctedNData)
+                Data(ii) = correctedNData;
+            end
+        end
+
         % preallocate array if data averaging to #values in the hourly file x number of ranges
         if ii == 1 && (Bins2Avg > 1 || Time2Avg > 1 || StartEndRangeAvg || OutputPavg)
             for jj = 1:Data(ii).NumChan
@@ -283,14 +298,14 @@ else
     fprintf('HrlyTemp=%.1f ',Data(1).HourlyAvgTemp);
 end
 if isnan(Data(1).HourlyAvgTemp) || ~isreal(Data(1).HourlyAvgTemp)
-    Data(1).HourlyAvgTemp = 15; %to do, move this to the setup parameter file
+    Data(1).HourlyAvgTemp = AvgTemperature;
     fprintf('\n**** No AZFP temperature found - using a fixed temperature of %.1f degC to calc soundspeed and range\n', Data(1).HourlyAvgTemp);
     %f = msgbox(['No water temperature available ...using a fixed value of ' num2str(Data(1).HourlyAvgTemp) ' degC'],'Warning');
 end
 
 %compute hourly average pressure, then use this to compute SoundSpeed
 if Parameters.a0 ~= 0 && Parameters.a1 ~= 0
-    Press = nanmean(arrayfun(@(x) Data(x).Pressure, 1:length(Data)));
+    Press = mean(arrayfun(@(x) Data(x).Pressure, 1:length(Data)),'omitnan');
     fprintf('HrlyPressure=%.1f\n',Press);
 else
     fprintf('\n');
@@ -376,11 +391,11 @@ if Time2Avg > 1
     NumTime = floor(length(Data)/Time2Avg);
     for kk = 1:NumTime
         % Elements of array to average, Time2Avg = 30 then Elem=1-30, 31-60 etc
-        Elem = [(kk-1)*Time2Avg+1:(kk-1)*Time2Avg+Time2Avg]';
+        Elem = ((kk-1)*Time2Avg+1:(kk-1)*Time2Avg+Time2Avg).';
         for jj = 1:Data(1).NumChan
             % convert back to counts N
             ELavg = 10*log10(mean(PavgArr(jj).data(Elem,:),1));
-            Output(jj).N(kk,:) = round(26214*Parameters(1).DS(jj)*(ELavg - Parameters(1).EL(jj) + 2.5/Parameters(1).DS(jj)));
+            Output(jj).N(kk,:) = round(26214*Parameters(1).DS(jj)*(ELavg - Parameters(1).EL(jj) + 2.5/Parameters(1).DS(jj)));            
             Output(jj).Range = Data(1).Range{jj};
             Output(jj).TiltCorrRange = Data(1).Range{jj}*Data(1).HourlyAvgcosTiltMag;
             % calc correction to Sv due to non square transmit pulse
@@ -390,6 +405,7 @@ if Time2Avg > 1
             Output(jj).Freq = Data(1).Freq(jj);
             Output(jj).seaAbs = Data(1).seaAbs(jj);
         end
+        Output(1).ProfileNumber(kk,1) = mean(arrayfun(@(x) Data(x).ProfileNumber, Elem))';
         Output(1).Date(kk,1) = mean(arrayfun(@(x) Data(x).Date, Elem))';
         Output(1).Tx(kk,1) = mean(arrayfun(@(x) Data(x).Tx, Elem))';
         Output(1).Ty(kk,1) = mean(arrayfun(@(x) Data(x).Ty, Elem))';
@@ -404,13 +420,13 @@ else % no time averaging, but may still have range averaging
         for jj = 1:Data(1).NumChan
             % convert back to counts N
             ELavg = 10*log10(PavgArr(jj).data);
-            Output(jj).N = round(26214*Parameters(1).DS(jj)*(ELavg - Parameters(1).EL(jj) + 2.5/Parameters(1).DS(jj)));
+            Output(jj).N = round(26214*Parameters(1).DS(jj)*(ELavg - Parameters(1).EL(jj) + 2.5/Parameters(1).DS(jj)));            
             Output(jj).Range = Data(1).Range{jj};
             Output(jj).TiltCorrRange = Data(1).Range{jj}*Data(1).HourlyAvgcosTiltMag;
         end
     else
         for jj = 1:Data(1).NumChan
-            Output(jj).N = cell2mat(arrayfun(@(x) Data(x).counts{jj}', [1:length(Data)]', 'UniformOutput', false));
+            Output(jj).N = cell2mat(arrayfun(@(x) Data(x).counts{jj}', (1:length(Data)).', 'UniformOutput', false));            
             Output(jj).Range = Data(1).Range{jj};
             Output(jj).TiltCorrRange = Data(1).Range{jj}*Data(1).HourlyAvgcosTiltMag;
         end
@@ -423,6 +439,7 @@ else % no time averaging, but may still have range averaging
         Output(jj).Freq = Data(1).Freq(jj);
         Output(jj).seaAbs = Data(1).seaAbs(jj);
     end
+    Output(1).ProfileNumber = arrayfun(@(x) Data(x).ProfileNumber, 1:length(Data))';
     Output(1).Date = arrayfun(@(x) Data(x).Date, 1:length(Data))';
     Output(1).Tx = arrayfun(@(x) Data(x).Tx, 1:length(Data))';
     Output(1).Ty = arrayfun(@(x) Data(x).Ty, 1:length(Data))';
@@ -618,7 +635,6 @@ end
 % calc battery voltage from counts
 function Volts = computeBattery(N)
 
-USL5_BAT_CONSTANT = 2.4738E-4;
 Volts = (N * (2.5/65536.) * (86.6 + 475.)/86.6);
 
 end

@@ -13,7 +13,7 @@
 % FILE LOADING AND AVERAGING:
 % Parameters.ProcDir = 0; 1 will prompt for an entire directory to
 % process, = 0 will prompt to load individual files in a directory
-Parameters.ProcDir = 0;
+Parameters.ProcDir = 1;
 Parameters.PavgArr = 0;
 
 % Parameters.datafilename = ''; % '' will prompt for hourly AZFP
@@ -23,6 +23,15 @@ Parameters.datafilename = '';
 % Parameters.xmlfilename = ''; % prompt for XML filename if no XML file exists 
 % in the directory, example '15101614.XML'
 Parameters.xmlfilename = '';
+
+% wrapper function to run on Count data before calc Sv or averaging
+% the variable Output(chan) is passed to the function
+% eg. Parameters.azfpTB_f_handle = @azfp_scaleN
+Parameters.azfpTB_f_handle = '';
+
+% if there is no azfp temperature use this value for sound speed and abs
+% coeff calcs
+Parameters.AvgTemperature = 15;
 
 % Parameters.Salinity = 35; % Salinity in psu
 Parameters.Salinity = 30;
@@ -37,7 +46,7 @@ Parameters.Time2Avg = 1;
 
 % Parameters.Pressure = 50; % in dbars (~ depth of instrument in meters). 
 % This can be approximate and is used in the soundspeed and absorption calc
-Parameters.Pressure = 40;
+Parameters.Pressure = 200;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PLOTTING:
