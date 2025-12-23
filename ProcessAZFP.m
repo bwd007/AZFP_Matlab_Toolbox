@@ -53,6 +53,7 @@ Plot = 0;
 UseTiltCorr = 0;
 PavgArr = [];
 LoadCSV = 0;
+azfpTB_f_handle = '';
 if isfield(Parameters,'ProcDir')
     ProcDir = Parameters(1).ProcDir;
 end
