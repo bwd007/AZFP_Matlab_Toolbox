@@ -34,6 +34,7 @@ defaultTime2Avg = 1;
 defaultPressure = 50;
 defaultSalinity = 35;
 defaultazfpTB_f_handle = '';
+defaultFilenum = [];
 defaultAvgTemperature = 15;
 addParameter(p,'Parameters',defaultParameters,@isstruct);
 addParameter(p,'datafilename',defaultdatafilename,@ischar);
@@ -65,6 +66,7 @@ Output = [];
 PavgArr = [];
 OutputPavg = 0;
 LoadCSV = 0;
+azfpTB_f_filehandle = '';
 
 if ~isfield(Parameters,'ShowComments')
     Parameters(1).ShowComments = 1;
@@ -87,7 +89,7 @@ if StartRange > 0 && EndRange > 0
 end
 % select an AZFP hourly file
 if isempty(datafilename)
-    [filename, pathname] = uigetfile({'*.*A;*.*B;*.*C;*.*D;*.azfp;*.aps6'}, 'Select an AZFP hourly file');
+    [filename, pathname] = uigetfile({'*.*A;*.*B;*.*C;*.*D;*.aps6'}, 'Select an AZFP hourly file');
 else
     pathname = pwd;
     filename = datafilename;
@@ -111,7 +113,7 @@ ii = 1;
 Stop = 0;
 while ~feof(fidAZFP) && ~Stop
     if ~Parameters.ULS6 && ~LoadCSV
-        [Data,Success] = readAZFP(fidAZFP,ii,Data,Parameters);
+        [Data,Success] = readAZFP(fidAZFP,ii,Data,Parameters);        
     elseif LoadCSV
         if ii == 1
             [CSVData, Success] = readCSV(Parameters);
@@ -198,7 +200,7 @@ while ~feof(fidAZFP) && ~Stop
         %run wrapper to scale N. We need to do it here in case averaging is
         %done so that the Pavg calc is correct
         if ~isempty(azfpTB_f_handle)
-            correctedNData = azfpTB_apply_function_wrapper(azfpTB_f_handle, {[pathname '/' filename], Parameters, Data(ii)});
+            [correctedNData,azfpTB_f_filehandle] = azfpTB_apply_function_wrapper(azfpTB_f_handle, {[pathname '/' filename], Parameters, Data(ii), ii});
             if ~isempty(correctedNData)
                 Data(ii) = correctedNData;
             end
@@ -279,6 +281,14 @@ end
 % close the binary file
 if ~LoadCSV
     fclose(fidAZFP);
+    % close wrapper function file
+    try
+        if ~isempty(fopen(azfpTB_f_filehandle))
+            fclose(azfpTB_f_filehandle);
+            pause(0.2);
+        end
+    catch
+    end
 end
 
 % trim PavgArr to 1:ii-1 in case not a full hour of data
@@ -291,7 +301,13 @@ end
 % compute hourly average temperature, then use this to compute SoundSpeed
 % and the range bins, store in Data(1)
 if isempty(Parameters(1).HourlyTemp)
-    Data(1).HourlyAvgTemp = mean(arrayfun(@(x) Data(x).T, 1:length(Data)),'omitnan');
+    if isscalar(Data(1).T)
+        Data(1).HourlyAvgTemp = Data(1).T;
+    elseif length(Data(1).T) == length(Data)
+        Data(1).HourlyAvgTemp = mean(arrayfun(@(x) Data(x).T, 1:length(Data)),'omitnan');
+    else
+        Data(1).HourlyAvgTemp = Parameters(1).HourlyTemp;
+    end
     fprintf('HrlyTemp=%.1f ',Data(1).HourlyAvgTemp);
 else
     Data(1).HourlyAvgTemp = Parameters(1).HourlyTemp;
@@ -316,7 +332,11 @@ end
 Data(1).SoundSpeed = computeSS(Data(1).HourlyAvgTemp,Press,Salinity);
 
 % compute the hourly avg value of the cos(TiltMag)
-Data(1).HourlyAvgcosTiltMag = mean(arrayfun(@(x) Data(x).cosTiltMag, 1:length(Data)));
+if isscalar(Data(1).cosTiltMag)
+    Data(1).HourlyAvgcosTiltMag = Data(1).cosTiltMag;
+elseif length(Data(1).cosTiltMag) == length(Data)
+    Data(1).HourlyAvgcosTiltMag = mean(arrayfun(@(x) Data(x).cosTiltMag, 1:length(Data)));
+end
 
 % if no bin averaging and PArameters.Value2Plot=3 (TS) adjust to start of bin
 RangeOffset = [0 0 0 0];
@@ -545,9 +565,9 @@ for jj = 1:Data(ii).NumChan % might have 4 freq but only 1 was acquired
         ls = fread(fidAZFP,Data(ii).NumBins(jj),'uint32','ieee-be'); %linearsum
         lso = fread(fidAZFP,Data(ii).NumBins(jj),'uchar','ieee-be'); %linearsumoverflow
         v = (ls + lso*4294967295)/divisor;
-        v = (log10(v)-2.5)*(8*65535)*Parameters(1).DS(jj);
+        v = (log10(v)-2.5)*8*65535*Parameters(1).DS(jj);
         v(isinf(v)) = 0;
-        Data(ii).counts{jj} = v;
+        Data(ii).counts{jj} = round(v);
     else % raw data = 16 bit values Log values
         Data(ii).counts{jj} = fread(fidAZFP,Data(ii).NumBins(jj),'uint16','ieee-be');
     end
@@ -703,6 +723,9 @@ d.BatteryTx = [];
 d.Depth = [];
 d.Pressure = [];
 d.Pavg = [];
+d.PAROS_DATE_TIME = [];
+d.PRESS_TEMP_RAW = [];
+d.PRESS_TEMP_ENG = [];
 
 end
 

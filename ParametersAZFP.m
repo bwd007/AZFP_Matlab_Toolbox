@@ -13,7 +13,7 @@
 % FILE LOADING AND AVERAGING:
 % Parameters.ProcDir = 0; 1 will prompt for an entire directory to
 % process, = 0 will prompt to load individual files in a directory
-Parameters.ProcDir = 1;
+Parameters.ProcDir = 0;
 Parameters.PavgArr = 0;
 
 % Parameters.datafilename = ''; % '' will prompt for hourly AZFP
@@ -34,7 +34,7 @@ Parameters.azfpTB_f_handle = '';
 Parameters.AvgTemperature = 15;
 
 % Parameters.Salinity = 35; % Salinity in psu
-Parameters.Salinity = 30;
+Parameters.Salinity = 0;
 
 % Parameters.Bins2Avg = 10; % number of range bins to average
 Parameters.Bins2Avg = 1;
@@ -46,7 +46,7 @@ Parameters.Time2Avg = 1;
 
 % Parameters.Pressure = 50; % in dbars (~ depth of instrument in meters). 
 % This can be approximate and is used in the soundspeed and absorption calc
-Parameters.Pressure = 200;
+Parameters.Pressure = 5;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PLOTTING:

@@ -130,19 +130,22 @@ try
                 end
 
                 DS = double(Parameters.DS(jj));
-                v   = double(v);
+                v = double(v);
 
-                % invert the transform:
-                % v_lin = 10.^(v/(8*65535*DS) + 2.5);
-                v_lin = 10.^((v ./ (8*65535*DS)) + 2.5);
-                S     = v_lin * divisor;          % ~ ls + lso*2^32-1
+                % invert the transform:                
+                v_lin = 10.^(v/(8*65535*DS) + 2.5);
+                S = v_lin * divisor;
+
+                % uint32 max is 4294967295 *2^32-1), set lso to 1
+                lso = uint8(zeros(size(S)));
+                lso(S > 4294967295) = uint8(1);
+                S(S > 4294967295) = (10.^(v(S > 4294967295)/(8*65535*DS)+2.5))*divisor - 4294967295;
 
                 % avoid nonpositive / NaN
                 S(~isfinite(S) | S <= 0) = 1;
 
                 % approximate with lso=0, ls=round(S)
-                ls  = uint32(round(S));
-                lso = uint8(zeros(size(ls)));
+                ls = uint32(round(S));                              
 
                 fwrite(fidAZFP, ls,  'uint32');   % linearsum
                 fwrite(fidAZFP, lso, 'uint8');    % overflow counts

@@ -117,9 +117,12 @@ if ProcDir
     cd(dirname);
     % get a list of all of the AZFP files
     if ispc
-        %filelist = dir('**\*.0*'); %the extra dot is to ignore .evi Echoview files, this does not work on MAC OS
-        files = dir(); 
-        filelist = files(~[files.isdir] & ~cellfun('isempty', regexp({files.name}, '\.\d{2}[A-Za-z]$', 'once')));
+        filelist = dir('**\*.0*'); %the extra dot is to ignore .evi Echoview files, this does not work on MAC OS
+        if isempty(filelist)
+            filelist = dir('**\*.aps6');
+        end
+        %files = dir(); 
+        %filelist = files(~[files.isdir] & ~cellfun('isempty', regexp({files.name}, '\.\d{2}[A-Za-z]$', 'once')));
     else
         filelist = dir('*.0*'); % for MACOS
     end
@@ -133,15 +136,20 @@ if ProcDir
     dirlist = d(I,:);
 elseif ~LoadCSV
     if isempty(datafilename) %if no datafilename input, then prompt
-        [filelist, dirname] = uigetfile('*.*;*.azfp;*.aps6', 'Select AZFP hourly file(s)','MultiSelect', Parameters(1).MultiSelect);
+        [filelist, dirname] = uigetfile('*.0*;*.aps6', 'Select AZFP hourly file(s)','MultiSelect', Parameters(1).MultiSelect);
         if iscell(filelist) % multiple files selected
             numfiles = length(filelist);
+            % sort in case phase file extension messes up order
+            [~,f] = fileparts(filelist);
+            [~,I] = sort(f);
+            filelist = filelist(I);
         else %one file selected
             numfiles = size(filelist,1);
             if(~filelist)
                 return;
             end
         end
+        
         cd(dirname);
     else
         if ProcDir == 0
@@ -169,7 +177,7 @@ else
         fname = char(filelist(1,:));
     end
 end
-if contains(fname,'azfp')
+if contains(fname,'aps6')
     Parameters.ULS6 = 1;
 end
 if ~Parameters.ULS6
@@ -213,6 +221,7 @@ for ii = 1:numfiles
     [DataOut,Par,PavgArr] = LoadAZFP('Salinity',Salinity,'Bins2Avg',Bins2Avg,'StartRange',StartRange,'EndRange',EndRange, ...
         'Time2Avg',Time2Avg,'datafilename',fname,'Parameters',Parameters,'Pressure',Pressure,'azfpTB_f_handle',azfpTB_f_handle, ...
         'AvgTemperature',AvgTemperature);
+    
     % check for an empty file and break
     if isempty(DataOut)
         if numfiles > 1
@@ -221,6 +230,10 @@ for ii = 1:numfiles
             Output = [];
             return;
         end
+    end
+    % don't append to Output for ProcDir with many files
+    if ProcDir|| numfiles > 40
+        continue
     end
     for jj=1:DataOut(1).NumChan
         if ii==1

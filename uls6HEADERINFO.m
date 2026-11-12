@@ -1,4 +1,5 @@
 % uls6 constants for reading data
+% 2026-11-10
 xmlStartFlag = 'F044CC11'; %specify uls6 xml start record
 xmlEndFlag = 'E088DD66'; %specify uls6 xml end record
 dataStartFlag = 'FF01AA00'; %flag indicating the start of a profile data record
@@ -46,22 +47,17 @@ RecordIDLookup = {0x2A,'FIRST_HEADER_RECORD';
 0X1B,'Ancillary';%'SENSOR_DATA';
 0X20,'GPS_DATE_TIME';
 0X21,'GPS_LAT_LONG';
-0X50,'CUSTOM1';  %0X70 to 0x7F CUSTOM 0 Set by user Set by user Variable values
-0X51,'CUSTOM2';
-0X52,'CUSTOM3';
-0X53,'CUSTOM4';
-0X54,'CUSTOM5';
-0X55,'CUSTOM6';
-0X56,'CUSTOM7';
-0X57,'CUSTOM8';
-0X58,'CUSTOM9';
-0X59,'CUSTOM10';
-0X5A,'CUSTOM11';
-0X5B,'CUSTOM12';
-0X5C,'CUSTOM13';
-0X5D,'CUSTOM14';
-0X5E,'CUSTOM15';
-0X5F,'CUSTOM16'};
+0X26,'PAROS_DATE_TIME';
+0X27,'PRESS_TEMP_RAW';
+0X28,'PRESS_TEMP_ENG';
+0X29,'IMU_ANGLE_TILTX_TILTY';
+0X30,'10LX_INFO';
+0X31,'10LX_PRESSURE';
+0X32,'10LX_TEMPERATURE';
+0X50,'CUSTOM';  %Set by user Set by user Variable values
+0X00,'ERROR_UNKNOWN_TYPE';
+0X00,'ERROR_TOO_MANY_RECORDS';
+0X00,'ERROR_TOO_FEW_RECORDS';
+0X00,'ERROR_MISSING_REQUIRED'};
 
-ID = cell2mat({RecordIDLookup{:,1}});
-
+ID = cell2mat(RecordIDLookup(:,1))';
